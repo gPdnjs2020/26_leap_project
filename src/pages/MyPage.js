@@ -3,72 +3,136 @@ import { useNavigate } from 'react-router-dom';
 
 function MyPage() {
   const navigate = useNavigate();
-  const [leaps, setLeaps] = useState([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    grown: 0,
+    rate: 0,
+    categories: { health: 0, study: 0, hobby: 0, money: 0 }
+  });
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem('leaps')) || [];
-    setLeaps(saved.reverse());
+    const leaps = JSON.parse(localStorage.getItem('leaps')) || [];
+    
+    // 1. 전체 통계 계산
+    const total = leaps.length;
+    
+    // 다 큰 나무 계산 (actions가 있고, 체크된 수가 actions 길이와 같을 때)
+    const grown = leaps.filter(leap => {
+      const checkedCount = (leap.checked || []).filter(Boolean).length;
+      const totalActions = (leap.actions || []).length;
+      return totalActions > 0 && checkedCount === totalActions;
+    }).length;
+
+    // 성공률 (0으로 나누기 방지)
+    const rate = total === 0 ? 0 : Math.round((grown / total) * 100);
+
+    // 2. 카테고리별 개수 계산
+    const catCounts = { health: 0, study: 0, hobby: 0, money: 0 };
+    leaps.forEach(leap => {
+      // 카테고리가 없거나 이상하면 'health'로 취급
+      const type = leap.category || 'health';
+      if (catCounts[type] !== undefined) {
+        catCounts[type]++;
+      } else {
+        catCounts['health']++;
+      }
+    });
+
+    setStats({
+      total,
+      grown,
+      rate,
+      categories: catCounts
+    });
   }, []);
 
-  // 데이터가 완전하지 않은 경우를 대비해 안전하게 필터링
-  const ongoing = leaps.filter(leap => !leap.completed);
-  const done = leaps.filter(leap => leap.completed);
-
-  const clearHistory = () => {
-    if(window.confirm('정말 삭제하시겠습니까?')) {
-      localStorage.removeItem('leaps');
-      setLeaps([]);
-    }
+  // 🏆 레벨 계산 로직
+  const getLevelInfo = (grownCount) => {
+    if (grownCount >= 10) return { title: "숲의 주인 👑", desc: "이 구역의 전설입니다!", color: "#FFD700" };
+    if (grownCount >= 5)  return { title: "베테랑 정원사 🌿", desc: "이제 숲이 울창하네요.", color: "#4CAF50" };
+    if (grownCount >= 1)  return { title: "새싹 지킴이 🌱", desc: "첫 나무를 키워냈군요!", color: "#8BC34A" };
+    return { title: "씨앗 요정 🧚", desc: "첫 나무를 심어보세요!", color: "#cfd8dc" };
   };
 
+  const myLevel = getLevelInfo(stats.grown);
+
+  // 카테고리별 색상 및 이름
+  const categoryConfig = [
+    { type: 'health', icon: '🌲', name: '건강', color: '#4CAF50' },
+    { type: 'study',  icon: '🍂', name: '공부', color: '#FF9800' },
+    { type: 'hobby',  icon: '🌸', name: '취미', color: '#E91E63' },
+    { type: 'money',  icon: '🍎', name: '금전', color: '#F44336' },
+  ];
+
   return (
-    <div className="container">
-      <div className="header-row">
-        <button className="back-btn" onClick={() => navigate('/')}>← 홈으로</button>
-        <h2>나의 도약 기록</h2>
+    <div className="mypage-container">
+      
+      {/* 1. 레벨 카드 */}
+      <div className="level-card">
+        <div style={{fontSize: '40px', marginBottom: '10px'}}>
+            {stats.grown >= 10 ? '🤴' : stats.grown >= 5 ? '🧑‍🌾' : '🧚'}
+        </div>
+        <div className="level-title">{myLevel.title}</div>
+        <p style={{opacity: 0.9}}>{myLevel.desc}</p>
       </div>
 
-      {/* 1. 진행 중인 도약 */}
-      <h3 className="section-title">🔥 진행 중 ({ongoing.length})</h3>
-      <div className="leap-list">
-        {ongoing.length === 0 ? <p className="no-data">진행 중인 도약이 없습니다.</p> : 
-          ongoing.map((leap) => (
-            <div key={leap.id} className="leap-card active" onClick={() => navigate(`/run/${leap.id}`)}>
-              <div className="leap-date">{leap.date}</div>
-              <h3 className="leap-title">{leap.goal}</h3>
-              <div className="status-badge">
-                {/* ⚠️ 여기서 에러가 났던 겁니다. 안전하게 수정됨 👇 */}
-                {(leap.checked || []).filter(Boolean).length} / 3 단계 완료 (이어서 하기)
+      {/* 2. 핵심 통계 3가지 */}
+      <div className="stats-grid">
+        <div className="stat-box">
+          <span className="stat-number">{stats.total}개</span>
+          <span className="stat-label">심은 씨앗</span>
+        </div>
+        <div className="stat-box">
+          <span className="stat-number">{stats.grown}그루</span>
+          <span className="stat-label">다 큰 나무</span>
+        </div>
+        <div className="stat-box">
+          <span className="stat-number">{stats.rate}%</span>
+          <span className="stat-label">성공률</span>
+        </div>
+      </div>
+
+      {/* 3. 내 숲의 성향 분석 (그래프) */}
+      <div className="analysis-card">
+        <h3 style={{marginTop:0, marginBottom:'20px', fontSize:'18px'}}>내 숲의 성향</h3>
+        
+        {stats.total === 0 ? (
+          <p style={{textAlign:'center', color:'#999', padding:'20px'}}>
+            아직 데이터가 없어요.<br/>씨앗을 심어보세요!
+          </p>
+        ) : (
+          categoryConfig.map((cat) => {
+            const count = stats.categories[cat.type];
+            // 전체 대비 비율 계산 (최대 100%)
+            const percent = stats.total === 0 ? 0 : (count / stats.total) * 100;
+            
+            return (
+              <div key={cat.type} className="category-row">
+                <span className="cat-icon">{cat.icon}</span>
+                <div className="progress-bg">
+                  <div 
+                    className="progress-fill" 
+                    style={{
+                      width: `${percent}%`, 
+                      background: cat.color
+                    }}
+                  />
+                </div>
+                <span className="cat-count">{count}</span>
               </div>
-            </div>
-          ))
-        }
+            );
+          })
+        )}
       </div>
 
-      <hr style={{margin: '30px 0', border: 'none', borderTop: '1px solid #eee'}}/>
-
-      {/* 2. 완료된 도약 */}
-      <h3 className="section-title">🏆 완료함 ({done.length})</h3>
-      <div className="leap-list">
-        {done.length === 0 ? <p className="no-data">아직 완료한 도약이 없습니다.</p> : 
-          done.map((leap) => (
-            <div key={leap.id} className="leap-card done">
-              <div className="leap-date">{leap.date}</div>
-              <h3 className="leap-title">{leap.goal}</h3>
-              <div className="leap-steps">
-                {/* actions가 없을 경우도 대비 */}
-                {(leap.actions || []).map((act, i) => (
-                  <span key={i} className="step-badge">✔ {act}</span>
-                ))}
-              </div>
-            </div>
-          ))
-        }
-      </div>
-
-      {leaps.length > 0 && (
-        <button className="text-btn" onClick={clearHistory}>전체 기록 초기화</button>
-      )}
+      {/* 하단 닫기 버튼 */}
+      <button 
+        className="primary-btn" 
+        style={{marginTop: '30px', background:'#555'}} 
+        onClick={() => navigate('/')}
+      >
+        숲으로 돌아가기
+      </button>
     </div>
   );
 }

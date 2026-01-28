@@ -237,3 +237,329 @@ h2 { margin: 0; color: var(--forest-deep); font-size: 22px; }
 .check-item input[type="checkbox"] {
   width: 20px; height: 20px; accent-color: var(--forest-main);
 }
+
+/* --- 🌙 밤 모드 (Night Mode) --- */
+.forest-field.night-mode {
+  /* 짙은 남색 그라데이션 (밤하늘) */
+  background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
+  transition: background 1s ease; /* 부드럽게 변함 */
+}
+
+/* 밤에는 글씨를 하얗게 */
+.forest-field.night-mode .foot-label {
+  color: #fff;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+/* --- ✨ 반딧불이 효과 --- */
+.firefly-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100px; /* 나무 주변을 감싸는 크기 */
+  height: 100px;
+  transform: translate(-50%, -50%);
+  pointer-events: none; /* 클릭 방해 금지 */
+  z-index: 6;
+}
+
+.firefly {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background-color: #ffd700; /* 황금빛 */
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ffd700; /* 빛나는 효과 */
+  opacity: 0;
+  animation: float-sparkle 4s infinite ease-in-out;
+}
+
+/* --- 🌙 밤 모드 (Night Mode) 스타일 --- */
+
+/* 1. 밤이 되면 배경색 변경 */
+.forest-field.night-mode {
+  background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
+  transition: background 1s ease;
+}
+
+/* 2. 밤에는 글씨를 하얗고 진하게! (중요) */
+.forest-field.night-mode .foot-label {
+  color: #ffffff !important;  /* 무조건 하얀색으로 */
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8); /* 검은 그림자를 깔아서 더 잘 보이게 */
+  font-weight: bold;
+}
+
+/* 3. 밤에는 발자국 아이콘도 살짝 밝게 */
+.forest-field.night-mode .foot-icon {
+  filter: brightness(1.2); 
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); /* 은은한 후광 */
+}
+
+.firefly-container {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 100px; height: 100px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 6;
+}
+
+.firefly {
+  position: absolute;
+  width: 6px; height: 6px;
+  background-color: #ffd700;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ffd700;
+  opacity: 0;
+  animation: float-sparkle 4s infinite ease-in-out;
+}
+
+/* --- 📊 마이페이지 (MyPage) 스타일 --- */
+.mypage-container {
+  padding-top: 100px; /* 👈 헤더 높이만큼 아래로 내리기 (수정됨) */
+  padding-bottom: 30px;
+  padding-left: 20px;
+  padding-right: 20px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.level-card {
+  background: linear-gradient(135deg, #a8e063 0%, #56ab2f 100%);
+  color: white;
+  padding: 25px;
+  border-radius: 20px;
+  text-align: center;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 20px rgba(86, 171, 47, 0.3);
+}
+
+.level-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.stat-box {
+  background: white;
+  padding: 15px 10px;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.stat-number {
+  font-size: 20px;
+  font-weight: bold;
+  color: #2e7d32;
+  display: block;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #888;
+}
+
+.analysis-card {
+  background: white;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.category-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.cat-icon {
+  font-size: 20px;
+  width: 30px;
+}
+
+.progress-bg {
+  flex: 1;
+  height: 10px;
+  background: #f0f0f0;
+  border-radius: 5px;
+  margin: 0 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 1s ease;
+}
+
+.cat-count {
+  font-size: 14px;
+  font-weight: bold;
+  color: #555;
+  width: 30px;
+  text-align: right;
+}
+
+@keyframes float-sparkle {
+  0% { transform: translate(0, 0); opacity: 0; }
+  50% { transform: translate(15px, -15px); opacity: 0.8; }
+  100% { transform: translate(-10px, -25px); opacity: 0; }
+}
+
+/* 반딧불이 움직임 애니메이션 */
+@keyframes float-sparkle {
+  0% { transform: translate(0, 0); opacity: 0; }
+  20% { opacity: 1; }
+  50% { transform: translate(15px, -15px); opacity: 0.8; }
+  80% { opacity: 1; }
+  100% { transform: translate(-10px, -25px); opacity: 0; }
+}
+
+/* --- 🐿️ 숲속 친구들 (Animals) --- */
+.forest-animal {
+  position: absolute;
+  pointer-events: none; /* 클릭은 뒤에 있는 땅이나 나무에 양보 */
+  z-index: 2; /* 발자국(1)보다 위, 다 큰 나무(5)보다 아래 */
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  transition: all 0.5s;
+}
+
+/* 1. 다람쥐: 촐랑촐랑 움직임 */
+.animal-squirrel {
+  font-size: 24px;
+  animation: squirrel-move 8s infinite alternate ease-in-out;
+}
+@keyframes squirrel-move {
+  0% { transform: translateX(0) rotate(0deg); }
+  20% { transform: translateX(20px) rotate(5deg); }
+  50% { transform: translateX(-10px) rotate(-5deg); }
+  80% { transform: translateX(30px) rotate(5deg) scaleX(-1); } /* 뒤집기 */
+  100% { transform: translateX(0) rotate(0deg); }
+}
+
+/* 2. 토끼: 깡충깡충 */
+.animal-rabbit {
+  font-size: 28px;
+  animation: rabbit-hop 3s infinite ease-in-out;
+}
+@keyframes rabbit-hop {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); } /* 점프 */
+}
+
+/* 3. 사슴: 우아하게 숨쉬기 */
+.animal-deer {
+  font-size: 50px;
+  animation: deer-breath 6s infinite ease-in-out;
+}
+@keyframes deer-breath {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* 4. 곰: 듬직하게 좌우로 끄덕 */
+.animal-bear {
+  font-size: 60px;
+  animation: bear-sway 10s infinite ease-in-out;
+}
+@keyframes bear-sway {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  75% { transform: rotate(-5deg); }
+}
+
+/* --- 🛖 도토리 상점 (Acorn Shop) --- */
+.acorn-counter {
+  position: fixed;
+  top: 100px; /* 헤더 아래 */
+  left: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-weight: bold;
+  color: #8d6e63;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.shop-btn {
+  position: fixed;
+  bottom: 20px;
+  left: 20px; /* 글쓰기 버튼 반대쪽 */
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #ffb74d; /* 주황색 */
+  color: white;
+  font-size: 30px;
+  border: none;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  cursor: pointer;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 상점 모달 */
+.shop-modal {
+  position: fixed;
+  bottom: 20px; left: 20px; right: 20px;
+  background: white;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+  z-index: 200;
+  animation: slide-up 0.3s ease;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.shop-items {
+  display: flex;
+  gap: 15px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.shop-item-card {
+  min-width: 80px;
+  background: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+}
+.shop-item-card:hover { background: #fff3e0; }
+
+.item-icon { font-size: 30px; display: block; margin-bottom: 5px; }
+.item-cost { font-size: 12px; color: #8d6e63; font-weight: bold; }
+
+/* 🏡 숲에 배치된 아이템 */
+.decoration-obj {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none; /* 클릭 통과 */
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+  z-index: 3; /* 나무(5)보다 뒤, 바닥보다 앞 */
+}
+
+/* 밤에 가로등 빛나게 하기 */
+.night-mode .decoration-lamp {
+  filter: drop-shadow(0 0 15px #ffd700); /* 노란 빛 */
+}
