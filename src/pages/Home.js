@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// App.js에서 전달받은 isMuted(소리 끔 여부)를 사용합니다.
+// 나무 종류별 아이콘 매핑
+const TREE_ICONS = {
+  health: '🌲', // 건강
+  study: '🍂',  // 공부
+  hobby: '🌸',  // 취미
+  money: '🍎',  // 금전
+  default: '🌲' // 예전 데이터용 기본값
+};
+
 function Home({ isMuted }) {
   const navigate = useNavigate();
   const [leaps, setLeaps] = useState([]);
@@ -9,32 +17,33 @@ function Home({ isMuted }) {
   useEffect(() => {
     const savedLeaps = JSON.parse(localStorage.getItem('leaps')) || [];
     
-    // 🛠️ [데이터 수리] 위치(x, y)가 없는 "옛날 데이터"들에게 랜덤 위치 부여
+    // 데이터 수리 (위치 없는 애들 랜덤 위치 + 카테고리 없는 애들 기본값)
     let hasChanges = false;
-    
     const fixedLeaps = savedLeaps.map(leap => {
-      // 만약 x나 y 좌표가 없다면? (옛날 데이터라면)
-      if (leap.x === undefined || leap.y === undefined) {
+      let updated = { ...leap };
+      
+      // 1. 위치 없으면 추가
+      if (updated.x === undefined || updated.y === undefined) {
         hasChanges = true;
-        return {
-          ...leap,
-          // 숲 안쪽 안전한 구역에 랜덤 배치
-          x: Math.floor(Math.random() * 80) + 10,
-          y: Math.floor(Math.random() * 70) + 15
-        };
+        updated.x = Math.floor(Math.random() * 80) + 10;
+        updated.y = Math.floor(Math.random() * 70) + 15;
       }
-      return leap; // 이미 위치가 있으면 그대로 둠
+
+      // 2. ⭐ 카테고리 없으면(옛날 데이터) 'health'로 설정
+      if (!updated.category) {
+        hasChanges = true;
+        updated.category = 'health';
+      }
+      
+      return updated;
     });
 
-    // 변경된 내용이 있으면 저장소에도 업데이트
     if (hasChanges) {
       localStorage.setItem('leaps', JSON.stringify(fixedLeaps));
     }
-    
     setLeaps(fixedLeaps);
   }, []);
 
-  // 🎵 발자국/나무 클릭 시 재생되는 효과음
   const playStepSound = () => {
     if (!isMuted) {
       const audio = new Audio("https://codeskulptor-demos.commondatastorage.googleapis.com/k380/wood_tap.mp3");
@@ -52,23 +61,20 @@ function Home({ isMuted }) {
           </div>
         ) : (
           leaps.map((leap) => {
-            // 1. 진행 상태 계산
             const safeChecked = leap.checked || [];
             const progress = safeChecked.filter(Boolean).length;
             const totalActions = (leap.actions || []).length;
-            
-            // 2. 나무 성장 여부 확인 (3단계 완료 시)
             const isFullyGrown = totalActions > 0 && progress === totalActions;
             
-            // 3. 크기 계산 (나무는 2.2배, 발자국은 진행도에 따라 커짐)
-            const scaleSize = isFullyGrown ? 2.2 : 1 + (progress * 0.35); 
+            // ⭐ 카테고리에 맞는 나무 아이콘 가져오기
+            const treeIcon = TREE_ICONS[leap.category] || TREE_ICONS.default;
 
-            // 4. 위치 및 스타일 설정
+            const scaleSize = isFullyGrown ? 2.2 : 1 + (progress * 0.35); 
             const positionStyle = {
               left: `${leap.x}%`, 
               top: `${leap.y}%`,
               transform: `translate(-50%, -50%)`,
-              zIndex: isFullyGrown ? 5 : 1 // 나무가 발자국보다 앞으로 오게
+              zIndex: isFullyGrown ? 5 : 1
             };
 
             return (
@@ -77,16 +83,16 @@ function Home({ isMuted }) {
                 className={`living-footprint ${isFullyGrown ? 'grown-tree' : ''}`}
                 style={positionStyle}
                 onClick={() => {
-                  playStepSound(); // 클릭 시 소리 재생
+                  playStepSound();
                   navigate(`/run/${leap.id}`);
                 }}
               >
-                {/* 아이콘: 다 컸으면 나무(🌳), 아니면 발자국(👣) */}
                 <span 
                   className="foot-icon" 
                   style={{ transform: `scale(${scaleSize})` }}
                 >
-                  {isFullyGrown ? '🌳' : '👣'}
+                  {/* 다 컸으면 해당 나무 아이콘, 아니면 발자국 */}
+                  {isFullyGrown ? treeIcon : '👣'}
                 </span>
                 
                 <span className="foot-label">{leap.goal}</span>
@@ -96,7 +102,6 @@ function Home({ isMuted }) {
         )}
       </div>
 
-      {/* 우측 하단 생성 버튼 */}
       <button className="fab-btn" onClick={() => navigate('/create')}>+</button>
     </>
   );
