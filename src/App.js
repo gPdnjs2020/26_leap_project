@@ -1,22 +1,21 @@
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
+import Header from './components/Header'; // 👈 방금 만든 헤더 불러오기
 import Home from './pages/Home';
 import Create from './pages/Create';
-import MyPage from './pages/MyPage';
 import Run from './pages/Run';
+import MyPage from './pages/MyPage';
 import './App.css';
 
 function App() {
   return (
     <BrowserRouter>
+      <Header />
+      
       <div className="app-layout">
         <Routes>
-          {/* 메인 페이지 */}
           <Route path="/" element={<Home />} />
-          {/* 도약 생성 (목표+스텝 설정) */}
           <Route path="/create" element={<Create />} />
-          {/* 마이 페이지 (리스트 확인) */}
           <Route path="/mypage" element={<MyPage />} />
-          {/* 실행 페이지 */}
           <Route path="/run/:id" element={<Run />} />
         </Routes>
       </div>

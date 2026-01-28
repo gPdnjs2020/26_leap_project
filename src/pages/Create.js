@@ -9,25 +9,32 @@ function Create() {
 
   // "도약 시작" 버튼 누르면 실행
   const handleStart = () => {
-    const newId = Date.now(); // 고유 ID 생성
+    const newId = Date.now();
+    
+    // ⭐ 랜덤 위치 생성 (화면의 10% ~ 80% 사이)
+    // 너무 구석에 박히지 않게 여백을 둠
+    const randomX = Math.floor(Math.random() * 70) + 10; 
+    const randomY = Math.floor(Math.random() * 70) + 10;
+
     const newLeap = {
       id: newId,
       goal: goal,
       actions: actions,
-      checked: [false, false, false], // 체크 상태 초기화
-      completed: false, // 아직 완료 안 됨
-      date: new Date().toLocaleDateString()
+      checked: [false, false, false],
+      completed: false,
+      date: new Date().toLocaleDateString(),
+      x: randomX, // ⭐ X 좌표 저장
+      y: randomY  // ⭐ Y 좌표 저장
     };
 
-    // 저장하기
     const currentLeaps = JSON.parse(localStorage.getItem('leaps')) || [];
     localStorage.setItem('leaps', JSON.stringify([...currentLeaps, newLeap]));
 
-    // 실행 페이지로 이동! 🚀
     navigate(`/run/${newId}`);
   };
 
-  // 1. 목표 입력
+  // ... (아래 렌더링 부분은 기존과 동일) ...
+  // 기존 코드 그대로 두시면 됩니다.
   if (step === 1) {
     return (
       <div className="container">
@@ -36,12 +43,11 @@ function Create() {
           placeholder="예: 조깅하기" 
           value={goal} onChange={(e) => setGoal(e.target.value)} 
         />
-        <button onClick={() => setStep(2)} disabled={!goal}>다음</button>
+        <button className="primary-btn" onClick={() => setStep(2)} disabled={!goal}>다음</button>
       </div>
     );
   }
 
-  // 2. 스텝 설정 (여기서 끝내고 저장함)
   if (step === 2) {
     return (
       <div className="container">
@@ -58,7 +64,7 @@ function Create() {
             }} 
           />
         ))}
-        <button onClick={handleStart} disabled={actions.some(a=>!a)}>
+        <button className="primary-btn" onClick={handleStart} disabled={actions.some(a=>!a)}>
           도약 시작하기!
         </button>
       </div>
