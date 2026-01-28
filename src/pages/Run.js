@@ -41,10 +41,6 @@ function Run() {
 
   return (
     <>
-      {/* 헤더 재사용 */}
-      <header className="forest-header">
-        <Link to="/" className="logo">🌲 숲으로 돌아가기</Link>
-      </header>
 
       <div className="modal-overlay">
         <div className="detail-card">

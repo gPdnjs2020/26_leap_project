@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import '../App.css'; // 스타일 가져오기
+import '../App.css'; // 한 단계 위(src)에 있는 css를 가져옴
 
 function Header() {
   return (
