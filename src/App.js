@@ -2,6 +2,7 @@ import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import Home from './pages/Home';
 import Create from './pages/Create';
 import MyPage from './pages/MyPage';
+import Run from './pages/Run';
 import './App.css';
 
 function App() {
@@ -15,6 +16,8 @@ function App() {
           <Route path="/create" element={<Create />} />
           {/* 마이 페이지 (리스트 확인) */}
           <Route path="/mypage" element={<MyPage />} />
+          {/* 실행 페이지 */}
+          <Route path="/run/:id" element={<Run />} />
         </Routes>
       </div>
     </BrowserRouter>
