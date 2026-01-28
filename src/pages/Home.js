@@ -5,13 +5,12 @@ const TREE_ICONS = {
   health: '🌲', study: '🍂', hobby: '🌸', money: '🍎', default: '🌲'
 };
 
-// 🛒 상점 아이템 목록 (수정됨: 복잡한 태그 대신 'real-pond'라는 글자 ID만 사용)
+// 🛒 상점 아이템 목록 (연못은 'real-pond'라는 ID 사용)
 const SHOP_ITEMS = [
   { id: 'flower', name: '꽃', icon: '🌸', cost: 10 },
   { id: 'bench', name: '벤치', icon: '🪑', cost: 20 },
   { id: 'lamp', name: '가로등', icon: '💡', cost: 30 },
   { id: 'rock', name: '바위', icon: '🪨', cost: 15 },
-  // 👇 여기가 핵심 수정 포인트! 태그 없이 문자열로 식별합니다.
   { id: 'pond', name: '연못', icon: 'real-pond', cost: 50 }, 
 ];
 
@@ -95,7 +94,6 @@ function Home({ isMuted }) {
       setAcorns(newAcorn);
       localStorage.setItem('acorns', newAcorn);
 
-      // 객체를 복사해서 저장 (React Component가 아닌 순수 데이터)
       const newItem = { uid: Date.now(), ...item }; 
       const newInventory = [...inventory, newItem];
       setInventory(newInventory);
@@ -156,13 +154,29 @@ function Home({ isMuted }) {
           touchAction: 'none'
         }}
       >
+        {/* 👇 [추가됨] ☀️ 낮 배경 요소 (햇살, 구름, 새) - 밤이 아닐 때만 렌더링 */}
+        {!isNight && (
+          <>
+            <div className="sun-glare"></div>
+            {/* 구름 3개 (속도와 위치를 다르게) */}
+            <div className="cloud" style={{ width: '100px', height: '30px', top: '15%', left: '-20%', animationDuration: '40s' }}></div>
+            <div className="cloud" style={{ width: '80px', height: '25px', top: '25%', left: '-10%', animationDuration: '35s', animationDelay: '5s' }}></div>
+            <div className="cloud" style={{ width: '120px', height: '40px', top: '10%', left: '-30%', animationDuration: '50s', animationDelay: '10s' }}></div>
+            
+            {/* 날아가는 새 2마리 */}
+            <div className="bird" style={{ top: '20%', animationDuration: '15s' }}>🕊️</div>
+            <div className="bird" style={{ top: '30%', animationDuration: '18s', animationDelay: '2s' }}>🕊️</div>
+          </>
+        )}
+
         <div className="acorn-counter">🌰 {acorns}</div>
         <button 
           onClick={() => setIsNight(!isNight)}
           style={{
             position: 'fixed', top: '100px', right: '20px', zIndex: 9999,
-            background: isNight ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)', 
-            border: 'none', borderRadius: '50%', width: '50px', height: '50px', fontSize: '24px', backdropFilter: 'blur(5px)'
+            background: isNight ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.5)', 
+            border: 'none', borderRadius: '50%', width: '50px', height: '50px', fontSize: '24px', backdropFilter: 'blur(5px)',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
           }}
         >
           {isNight ? '🌕' : '☀️'}
@@ -178,7 +192,7 @@ function Home({ isMuted }) {
           </div>
         )}
 
-        {/* 🏡 배치된 아이템 렌더링 (이 부분이 수정됨) */}
+        {/* 🏡 배치된 아이템 렌더링 */}
         {decorations.map((deco) => (
           <div 
             key={deco.uid}
@@ -187,7 +201,6 @@ function Home({ isMuted }) {
             onClick={() => isEditMode && retrieveItem(deco.uid)} 
             style={{ 
               left: `${deco.x}%`, top: `${deco.y}%`,
-              // 연못은 폰트 사이즈 영향을 받지 않도록 함
               fontSize: deco.icon === 'real-pond' ? undefined : '30px',
               pointerEvents: isEditMode ? 'auto' : 'none', 
               cursor: isEditMode ? 'pointer' : 'default',
@@ -195,7 +208,6 @@ function Home({ isMuted }) {
               zIndex: isEditMode && draggingTarget?.id === deco.uid ? 999 : 3
             }}
           >
-            {/* 👇 여기가 핵심! 아이콘 이름이 'real-pond'면 그림을 그리고, 아니면 이모지를 출력 */}
             {deco.icon === 'real-pond' ? (
               <div className="real-pond">
                 <span className="pond-duck">🦆</span>
@@ -237,6 +249,7 @@ function Home({ isMuted }) {
                 {isFullyGrown ? treeIcon : '👣'}
               </span>
               <span className="foot-label">{leap.goal}</span>
+              {/* 밤 & 다 자란 나무면 반딧불이 */}
               {isNight && isFullyGrown && !isEditMode && (
                 <div className="firefly-container">
                   {[...Array(5)].map((_, i) => (
@@ -294,7 +307,6 @@ function Home({ isMuted }) {
                 {SHOP_ITEMS.map((item) => (
                   <div key={item.id} className="shop-item-card" onClick={() => buyItem(item)}>
                     <div style={{height:'40px', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:'5px'}}>
-                      {/* 상점 목록에서도 연못은 오리 이모지로 대체해서 보여줌 */}
                       {item.icon === 'real-pond' ? <div style={{fontSize:'20px'}}>🦆</div> : <span className="item-icon">{item.icon}</span>}
                     </div>
                     <div style={{fontSize:'12px'}}>{item.name}</div>
@@ -313,7 +325,6 @@ function Home({ isMuted }) {
                 inventory.map((item) => (
                   <div key={item.uid} className="shop-item-card" onClick={() => placeItem(item)} style={{background: '#e3f2fd', border:'1px solid #90caf9'}}>
                     <div style={{height:'40px', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:'5px'}}>
-                      {/* 보관함 목록에서도 연못은 오리 이모지로 대체 */}
                       {item.icon === 'real-pond' ? <div style={{fontSize:'20px'}}>🦆</div> : <span className="item-icon">{item.icon}</span>}
                     </div>
                     <div style={{fontSize:'12px'}}>{item.name}</div>

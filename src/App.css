@@ -5,11 +5,11 @@
   --forest-main: #4f772d;    /* 메인 초록 */
   --forest-light: #90a955;   /* 밝은 연두 */
   --earth-brown: #8c6239;    /* 나무/흙색 */
-  --bg-color: #f0f7e6;       /* 숲 바닥 배경색 */
+  --bg-color: #f0f7e6;       /* 숲 바닥 배경색 (fallback) */
   --header-bg: rgba(255, 255, 255, 0.85); /* 반투명 헤더 */
 }
 
-/* 1. 기본 설정 (전체 화면 숲 배경) */
+/* 1. 기본 설정 */
 body {
   margin: 0;
   padding: 0;
@@ -41,7 +41,7 @@ body {
   text-decoration: none;
 }
 
-/* 3. 메인 숲 필드 */
+/* 3. 메인 숲 필드 (배경 업그레이드!) */
 .forest-field {
   padding-top: 60px; 
   width: 100%;
@@ -49,6 +49,16 @@ body {
   position: relative;
   overflow: hidden;
   touch-action: none; /* 모바일 드래그 시 화면 밀림 방지 */
+  
+  /* 👇 [낮 모드] 파란 하늘 -> 연두색 숲 그라데이션 */
+  background: linear-gradient(to bottom, 
+    #89c4f4 0%,   /* 맑은 하늘 */
+    #dbeeff 40%,  /* 구름 낀 수평선 */
+    #f0f9e8 50%,  /* 땅 경계 */
+    #dcedc8 60%,  /* 밝은 잔디 */
+    #aed581 100%  /* 짙은 잔디 */
+  );
+  transition: background 1.5s ease;
 }
 
 .empty-message {
@@ -58,6 +68,91 @@ body {
   text-align: center;
   opacity: 0.6;
   width: 100%;
+}
+
+/* --- ☁️ 낮 모드 전용 데코 (구름, 새, 햇살) --- */
+
+/* 1. 햇살 효과 */
+.sun-glare {
+  position: absolute;
+  top: -100px; left: -100px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(255,255,200,0.4) 0%, rgba(255,255,255,0) 70%);
+  filter: blur(30px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 2. 둥실둥실 구름 */
+.cloud {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50px;
+  pointer-events: none;
+  z-index: 1;
+  animation: float-cloud linear infinite;
+}
+.cloud::after, .cloud::before {
+  content: '';
+  position: absolute;
+  background: inherit;
+  border-radius: 50%;
+}
+.cloud::after { width: 50px; height: 50px; top: -25px; left: 10px; }
+.cloud::before { width: 40px; height: 40px; top: -15px; right: 10px; }
+
+@keyframes float-cloud {
+  from { transform: translateX(-150px); opacity: 0.8; }
+  to { transform: translateX(110vw); opacity: 0.8; }
+}
+
+/* 3. 날아다니는 새 */
+.bird {
+  position: absolute;
+  font-size: 14px;
+  color: #555;
+  opacity: 0.6;
+  z-index: 2;
+  animation: fly-bird linear infinite;
+  pointer-events: none;
+}
+@keyframes fly-bird {
+  0% { transform: translateX(110vw) translateY(0) scaleX(1); }
+  25% { transform: translateX(80vw) translateY(-20px) scaleX(1); }
+  50% { transform: translateX(50vw) translateY(10px) scaleX(1); }
+  75% { transform: translateX(20vw) translateY(-10px) scaleX(1); }
+  100% { transform: translateX(-20px) translateY(0) scaleX(1); }
+}
+
+/* --- 🌙 밤 모드 (Night Mode) --- */
+.forest-field.night-mode {
+  background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
+}
+
+/* 밤이 되면 구름과 새, 햇살 숨기기 */
+.night-mode .cloud, 
+.night-mode .bird,
+.night-mode .sun-glare {
+  opacity: 0;
+  transition: opacity 1s;
+}
+
+/* 밤에는 글씨를 하얗게 */
+.forest-field.night-mode .foot-label {
+  color: #ffffff !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  font-weight: bold;
+}
+
+/* 밤에는 발자국 아이콘도 살짝 밝게 */
+.forest-field.night-mode .foot-icon {
+  filter: brightness(1.2); 
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* 밤에 가로등 빛나게 하기 */
+.night-mode .decoration-lamp {
+  filter: drop-shadow(0 0 15px #ffd700);
 }
 
 /* 4. 살아있는 발자국 & 나무 */
@@ -106,7 +201,6 @@ body {
 }
 
 /* --- 🔘 버튼 공통 스타일 (PC 기본) --- */
-/* 상점, 글쓰기(+), 정원사 버튼의 공통 모양 정의 */
 .shop-btn, .fab-btn, .garden-btn {
   position: fixed;
   width: 60px;
@@ -123,7 +217,6 @@ body {
   font-size: 26px; /* 아이콘 크기 */
 }
 
-/* 마우스 올렸을 때 효과 */
 .shop-btn:hover, .fab-btn:hover, .garden-btn:hover {
   transform: scale(1.1);
 }
@@ -141,11 +234,10 @@ body {
   color: white;
   bottom: 30px;
   right: 30px;
-  font-size: 30px; /* 플러스 기호는 좀 더 크게 */
+  font-size: 30px; 
 }
 
 .garden-btn {
-  /* 색상은 JS 상태에 따라 변하므로 여기선 기본 위치만 잡음 */
   bottom: 90px; /* 상점 버튼 위 */
   left: 25px;   /* 상점 버튼 중앙 정렬 */
 }
@@ -237,7 +329,7 @@ h2 { margin: 0; color: var(--forest-deep); font-size: 22px; }
   width: 20px; height: 20px; accent-color: var(--forest-main);
 }
 
-/* --- 📊 마이페이지 (MyPage) 스타일 [복구됨!] --- */
+/* --- 📊 마이페이지 (MyPage) 스타일 --- */
 .mypage-container {
   padding-top: 100px;
   padding-bottom: 30px;
@@ -329,30 +421,6 @@ h2 { margin: 0; color: var(--forest-deep); font-size: 22px; }
   color: #555;
   width: 30px;
   text-align: right;
-}
-
-/* --- 🌙 밤 모드 (Night Mode) --- */
-.forest-field.night-mode {
-  background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
-  transition: background 1s ease;
-}
-
-/* 밤에는 글씨를 하얗게 */
-.forest-field.night-mode .foot-label {
-  color: #ffffff !important;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-  font-weight: bold;
-}
-
-/* 밤에는 발자국 아이콘도 살짝 밝게 */
-.forest-field.night-mode .foot-icon {
-  filter: brightness(1.2); 
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-}
-
-/* 밤에 가로등 빛나게 하기 */
-.night-mode .decoration-lamp {
-  filter: drop-shadow(0 0 15px #ffd700);
 }
 
 /* --- ✨ 반딧불이 효과 --- */
