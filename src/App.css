@@ -927,70 +927,88 @@ h2 {
     padding: 5px 10px;
   }
 
-  /* --- 🛒 보관함 액션 버튼 (배치/팔기) --- */
-  .inv-actions {
-    display: flex;
-    gap: 5px;
-    justify-content: center;
-    margin-top: 8px;
-  }
+}
 
-  .btn-inv {
-    border: none;
-    padding: 5px;
-    border-radius: 6px;
-    font-size: 10px;
-    font-weight: bold;
-    cursor: pointer;
-    flex: 1;
-  }
+/* --- 🛒 보관함 액션 버튼 (배치/팔기) --- */
+.inv-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 10px;
+}
 
-  .btn-place {
-    background: #bbdefb;
-    color: #1565c0;
-  }
+.btn-inv {
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  flex: 1;
+  transition: 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
 
-  .btn-sell {
-    background: #ffcdd2;
-    color: #c62828;
-  }
+.btn-inv:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
 
-  /* --- 🛠️ 편집 조작 패널 (크기 조절 및 보관) --- */
-  .edit-panel {
-    position: fixed;
-    bottom: 160px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(255, 255, 255, 0.95);
-    padding: 10px 15px;
-    border-radius: 20px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    z-index: 10000;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
+.btn-place {
+  background: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #bbdefb;
+}
 
-  .btn-edit {
-    background: #f0f0f0;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 12px;
-    font-weight: bold;
-    cursor: pointer;
-    color: #333;
-  }
+.btn-sell {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
 
-  .btn-edit:hover {
-    background: #e0e0e0;
-  }
+/* --- 🛠️ 아이템 위로 뜨는 편집 패널 --- */
+.item-edit-panel {
+  position: absolute;
+  bottom: 110%;
+  /* 아이템 아이콘 바로 위에 띄우기 */
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 8px 10px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  z-index: 10000;
+  white-space: nowrap;
+  /* 버튼들이 줄바꿈 되지 않게 */
+  cursor: default;
+}
 
-  .btn-edit.danger {
-    color: #d32f2f;
-    background: #ffebee;
-  }
+.btn-edit {
+  background: #f4f4f4;
+  border: 1px solid #e0e0e0;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 13px;
+  cursor: pointer;
+  color: #333;
+  transition: 0.2s;
+}
 
-  .btn-edit.danger:hover {
-    background: #ffcdd2;
-  }
+.btn-edit:hover {
+  background: #e0e0e0;
+  transform: scale(1.05);
+}
+
+.btn-edit.danger {
+  color: #d32f2f;
+  background: #ffebee;
+  border-color: #ffcdd2;
+}
+
+.btn-edit.danger:hover {
+  background: #ffcdd2;
 }

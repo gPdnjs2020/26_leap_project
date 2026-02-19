@@ -15,7 +15,7 @@ const SHOP_ITEMS = [
   { id: 'rock', name: '바위', icon: '🪨', cost: 15 },
   { id: 'campfire', name: '모닥불', icon: '🔥', cost: 35 },
   { id: 'tent', name: '텐트', icon: '⛺', cost: 60 },
-  { id: 'pond', name: '연못', icon: 'real-pond', cost: 50 }, 
+  { id: 'pond', name: '연못', icon: 'real-pond', cost: 50 },
 ];
 
 function Home({ isMuted }) {
@@ -27,11 +27,11 @@ function Home({ isMuted }) {
   const [animals, setAnimals] = useState([]);
   const [acorns, setAcorns] = useState(0);
 
-  const [inventory, setInventory] = useState([]);   
-  const [decorations, setDecorations] = useState([]); 
-  
+  const [inventory, setInventory] = useState([]);
+  const [decorations, setDecorations] = useState([]);
+
   const [isShopOpen, setIsShopOpen] = useState(false);
-  const [shopTab, setShopTab] = useState('buy'); 
+  const [shopTab, setShopTab] = useState('buy');
 
   // 🛠️ 정원사 모드 (스케일 및 선택된 아이템 상태 추가)
   const [isEditMode, setIsEditMode] = useState(false);
@@ -64,7 +64,7 @@ function Home({ isMuted }) {
     if (!isEditMode) return;
     e.preventDefault(); e.stopPropagation();
     setDraggingTarget({ type, id });
-    
+
     // 장식품을 클릭하면 선택(스케일 조절 패널 띄움), 빈 공간 누르면 해제
     if (type === 'deco') setSelectedDeco(id);
     else setSelectedDeco(null);
@@ -105,8 +105,8 @@ function Home({ isMuted }) {
       const newInventory = [...inventory, newItem];
       setInventory(newInventory);
       localStorage.setItem('inventory', JSON.stringify(newInventory));
-      
-      if(window.confirm("구매 완료! 📦 보관함으로 바로 이동할까요?")) {
+
+      if (window.confirm("구매 완료! 📦 보관함으로 바로 이동할까요?")) {
         setShopTab('inventory');
       }
     }
@@ -136,8 +136,8 @@ function Home({ isMuted }) {
     setDecorations(newDecorations);
     localStorage.setItem('decorations', JSON.stringify(newDecorations));
 
-    setIsShopOpen(false); 
-    setIsEditMode(true); 
+    setIsShopOpen(false);
+    setIsEditMode(true);
     setSelectedDeco(item.uid); // 꺼내자마자 바로 선택되도록
     alert(`${item.name} 위치와 크기를 조절해 보세요!`);
   };
@@ -151,13 +151,13 @@ function Home({ isMuted }) {
     localStorage.setItem('decorations', JSON.stringify(newDecorations));
 
     const newItem = { ...target };
-    delete newItem.x; 
+    delete newItem.x;
     delete newItem.y;
-    
+
     const newInventory = [...inventory, newItem];
     setInventory(newInventory);
     localStorage.setItem('inventory', JSON.stringify(newInventory));
-    
+
     setSelectedDeco(null); // 보관했으니 선택 해제
   };
 
@@ -165,10 +165,10 @@ function Home({ isMuted }) {
   const changeScale = (uid, delta) => {
     setDecorations(prev => {
       const updated = prev.map(d => {
-        if(d.uid === uid) {
+        if (d.uid === uid) {
           const currentScale = d.scale || 1;
           // 0.5배 ~ 최대 2.5배까지 제한
-          const newScale = Math.max(0.5, Math.min(2.5, currentScale + delta)); 
+          const newScale = Math.max(0.5, Math.min(2.5, currentScale + delta));
           return { ...d, scale: newScale };
         }
         return d;
@@ -180,13 +180,18 @@ function Home({ isMuted }) {
 
   return (
     <>
-      <div 
+      <div
         ref={containerRef}
         className={`forest-field ${isNight ? 'night-mode' : ''}`}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
-        onClick={() => setSelectedDeco(null)} // 빈 바탕 누르면 선택 해제
+        onPointerDown={(e) => {
+          // 진짜 빈 바탕(자신)을 눌렀을 때만 선택 해제
+          if (e.target === e.currentTarget) {
+            setSelectedDeco(null);
+          }
+        }}
         style={{
           border: isEditMode ? '4px solid #4CAF50' : 'none',
           cursor: isEditMode ? 'grab' : 'default',
@@ -205,11 +210,11 @@ function Home({ isMuted }) {
         )}
 
         <div className="acorn-counter">🌰 {acorns}</div>
-        <button 
+        <button
           onClick={() => setIsNight(!isNight)}
           style={{
             position: 'fixed', top: '100px', right: '20px', zIndex: 9999,
-            background: isNight ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.5)', 
+            background: isNight ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.5)',
             border: 'none', borderRadius: '50%', width: '50px', height: '50px', fontSize: '24px', backdropFilter: 'blur(5px)',
             boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
           }}
@@ -217,51 +222,92 @@ function Home({ isMuted }) {
           {isNight ? '🌕' : '☀️'}
         </button>
 
-        {isEditMode && !selectedDeco && (
-          <div style={{
-            position:'fixed', top:'160px', left:'50%', transform:'translateX(-50%)',
-            background:'rgba(0,0,0,0.6)', color:'white', padding:'8px 15px', borderRadius:'20px',
-            zIndex: 9999, fontSize: '14px', pointerEvents: 'none', textAlign:'center'
-          }}>
-            이동: 드래그<br/>크기/보관: 아이템 터치
-          </div>
-        )}
-
-        {/* 📐 아이템 크기 조절 및 보관 패널 */}
-        {isEditMode && selectedDeco && (
-          <div className="edit-panel" onClick={(e) => e.stopPropagation()}>
-            <button className="btn-edit" onClick={() => changeScale(selectedDeco, 0.2)}>➕ 확대</button>
-            <button className="btn-edit" onClick={() => changeScale(selectedDeco, -0.2)}>➖ 축소</button>
-            <button className="btn-edit danger" onClick={() => retrieveItem(selectedDeco)}>📦 보관</button>
-          </div>
-        )}
 
         {/* 🏡 배치된 아이템 렌더링 */}
         {decorations.map((deco) => {
+          const currentScale = deco.scale || 1; // 현재 배율값
           const isSelected = isEditMode && selectedDeco === deco.uid;
+
           return (
-            <div 
+            <div
               key={deco.uid}
               className={`decoration-obj ${deco.class || ''}`}
-              onPointerDown={(e) => handlePointerDown(e, 'deco', deco.uid)}
-              style={{ 
+
+              /* 👇 이벤트 방어막 */
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                handlePointerDown(e, 'deco', deco.uid);
+              }}
+              onClick={(e) => e.stopPropagation()}
+
+              style={{
                 left: `${deco.x}%`, top: `${deco.y}%`,
                 fontSize: deco.icon === 'real-pond' ? undefined : '30px',
-                pointerEvents: isEditMode ? 'auto' : 'none', 
-                cursor: isEditMode ? 'pointer' : 'default',
-                /* 여기서 scale을 적용하여 크기가 커지고 작아지게 만듭니다! */
-                transform: `translate(-50%, -50%) scale(${deco.scale || 1})`,
+                pointerEvents: isEditMode ? 'auto' : 'none',
+                cursor: isEditMode ? 'grab' : 'default',
+
+                /* 💡 다시 전체 박스를 확대합니다! (점선 테두리도 같이 커짐) */
+                transform: `translate(-50%, -50%) scale(${currentScale})`,
+
                 zIndex: isSelected || (isEditMode && draggingTarget?.id === deco.uid) ? 999 : 3,
-                border: isSelected ? '2px dashed #4CAF50' : 'none', // 선택 시 표시
+                border: isSelected ? '2px dashed #4CAF50' : 'none',
                 borderRadius: '10px',
-                padding: '2px'
+                position: 'absolute'
               }}
             >
-              {deco.icon === 'real-pond' ? (
-                <div className="real-pond"><span className="pond-duck">🦆</span></div>
-              ) : (
-                <span>{deco.icon}</span>
+              {/* ✨ 아이템 정수리에 뜨는 패널! (역 배율 마법 적용) */}
+              {isSelected && (
+                <div 
+                  className="item-edit-panel" 
+                  onPointerDown={(e) => e.stopPropagation()} 
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    transform: `translateX(-50%) scale(${1 / currentScale})`,
+                    transformOrigin: 'bottom center'
+                  }}
+                >
+                  <button className="btn-edit" onClick={() => changeScale(deco.uid, 0.2)}>➕ 확대</button>
+                  <button className="btn-edit" onClick={() => changeScale(deco.uid, -0.2)}>➖ 축소</button>
+                  <button className="btn-edit danger" onClick={() => retrieveItem(deco.uid)}>📦 보관</button>
+                </div>
               )}
+
+              {/* 👇 여기서부터 수정: 조명 효과가 추가된 아이콘 영역 */}
+              <div style={{ position: 'relative' }}>
+                
+                {/* 🌙 밤일 때 가로등(💡)에 노란빛 배경 추가 */}
+                {isNight && deco.id === 'lamp' && (
+                  <div style={{
+                    position: 'absolute', top: '50%', left: '50%', width: '120px', height: '120px',
+                    transform: 'translate(-50%, -50%)', borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(255, 230, 100, 0.3) 0%, transparent 70%)',
+                    zIndex: -1, pointerEvents: 'none', transition: 'background 0.5s ease'
+                  }} />
+                )}
+
+                {/* 🌙 밤일 때 모닥불(🔥)에 붉은빛 배경 추가 */}
+                {isNight && deco.id === 'campfire' && (
+                  <div style={{
+                    position: 'absolute', top: '50%', left: '50%', width: '100px', height: '100px',
+                    transform: 'translate(-50%, -50%)', borderRadius: '50%',
+                    background: 'radial-gradient(circle, rgba(255, 100, 0, 0.35) 0%, transparent 70%)',
+                    zIndex: -1, pointerEvents: 'none', transition: 'background 0.5s ease'
+                  }} />
+                )}
+
+                {deco.icon === 'real-pond' ? (
+                  <div className="real-pond"><span className="pond-duck">🦆</span></div>
+                ) : (
+                  <span style={{
+                    /* 💡 이모지 자체에도 빛나는 그림자 효과 부여! */
+                    filter: isNight && deco.id === 'lamp' ? 'drop-shadow(0 0 10px rgba(255, 230, 100, 0.8))' :
+                            isNight && deco.id === 'campfire' ? 'drop-shadow(0 0 10px rgba(255, 100, 0, 0.8))' : 'none',
+                    transition: 'filter 0.5s ease'
+                  }}>
+                    {deco.icon}
+                  </span>
+                )}
+              </div>
             </div>
           );
         })}
@@ -278,13 +324,13 @@ function Home({ isMuted }) {
           const totalActions = (leap.actions || []).length;
           const isFullyGrown = totalActions > 0 && progress === totalActions;
           const treeIcon = TREE_ICONS[leap.category] || TREE_ICONS.default;
-          const scaleSize = isFullyGrown ? 2.2 : 1 + (progress * 0.35); 
-          
+          const scaleSize = isFullyGrown ? 2.2 : 1 + (progress * 0.35);
+
           return (
-            <div 
-              key={leap.id} 
+            <div
+              key={leap.id}
               className={`living-footprint ${isFullyGrown ? 'grown-tree' : ''}`}
-              onPointerDown={(e) => handlePointerDown(e, 'tree', leap.id)} 
+              onPointerDown={(e) => handlePointerDown(e, 'tree', leap.id)}
               style={{
                 left: `${leap.x}%`, top: `${leap.y}%`,
                 transform: `translate(-50%, -50%)`,
@@ -300,7 +346,7 @@ function Home({ isMuted }) {
               {isNight && isFullyGrown && !isEditMode && (
                 <div className="firefly-container">
                   {[...Array(5)].map((_, i) => (
-                    <div key={i} className="firefly" style={{left:`${Math.random()*80+10}%`, top:`${Math.random()*80+10}%`, animationDelay:`${Math.random()*2}s`}} />
+                    <div key={i} className="firefly" style={{ left: `${Math.random() * 80 + 10}%`, top: `${Math.random() * 80 + 10}%`, animationDelay: `${Math.random() * 2}s` }} />
                   ))}
                 </div>
               )}
@@ -310,9 +356,9 @@ function Home({ isMuted }) {
       </div>
 
       <button className="shop-btn" onClick={() => setIsShopOpen(!isShopOpen)} title="상점">🛖</button>
-      
-      <button 
-        className="garden-btn" 
+
+      <button
+        className="garden-btn"
         onClick={() => {
           setIsEditMode(!isEditMode);
           setSelectedDeco(null); // 편집 모드 끄면 선택도 해제
@@ -330,11 +376,11 @@ function Home({ isMuted }) {
 
       {isShopOpen && (
         <div className="shop-modal">
-          <div style={{display:'flex', justifyContent:'space-between', marginBottom:'10px'}}>
-            <h3 style={{margin:0}}>숲속 거래소</h3>
-            <button onClick={() => setIsShopOpen(false)} style={{border:'none', background:'none'}}>✖️</button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <h3 style={{ margin: 0 }}>숲속 거래소</h3>
+            <button onClick={() => setIsShopOpen(false)} style={{ border: 'none', background: 'none' }}>✖️</button>
           </div>
-          
+
           <div className="shop-tabs">
             <button className={`shop-tab ${shopTab === 'buy' ? 'active' : ''}`} onClick={() => setShopTab('buy')}>
               상점 🛒
@@ -346,14 +392,14 @@ function Home({ isMuted }) {
 
           {shopTab === 'buy' && (
             <>
-              <p style={{fontSize:'14px', color:'#666', marginBottom:'10px'}}>보유 도토리: <strong>{acorns}개</strong></p>
+              <p style={{ fontSize: '14px', color: '#666', marginBottom: '10px' }}>보유 도토리: <strong>{acorns}개</strong></p>
               <div className="shop-items">
                 {SHOP_ITEMS.map((item) => (
                   <div key={item.id} className="shop-item-card" onClick={() => buyItem(item)}>
-                    <div style={{height:'40px', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:'5px'}}>
-                      {item.icon === 'real-pond' ? <div style={{fontSize:'20px'}}>🦆</div> : <span className="item-icon">{item.icon}</span>}
+                    <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '5px' }}>
+                      {item.icon === 'real-pond' ? <div style={{ fontSize: '20px' }}>🦆</div> : <span className="item-icon">{item.icon}</span>}
                     </div>
-                    <div style={{fontSize:'12px'}}>{item.name}</div>
+                    <div style={{ fontSize: '12px' }}>{item.name}</div>
                     <div className="item-cost">🌰 {item.cost}</div>
                   </div>
                 ))}
@@ -364,19 +410,21 @@ function Home({ isMuted }) {
           {shopTab === 'inventory' && (
             <div className="shop-items">
               {inventory.length === 0 ? (
-                <p style={{color:'#999', padding:'20px', width:'100%', textAlign:'center'}}>보관함이 비었습니다.</p>
+                <p style={{ color: '#999', padding: '20px', width: '100%', textAlign: 'center' }}>보관함이 비었습니다.</p>
               ) : (
                 inventory.map((item) => (
-                  <div key={item.uid} className="shop-item-card" style={{background: '#e3f2fd', border:'1px solid #90caf9', cursor:'default'}}>
-                    <div style={{height:'40px', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:'5px'}}>
-                      {item.icon === 'real-pond' ? <div style={{fontSize:'20px'}}>🦆</div> : <span className="item-icon">{item.icon}</span>}
+                  <div key={item.uid} className="shop-item-card" style={{ background: '#e3f2fd', border: '1px solid #90caf9', cursor: 'default' }}>
+                    <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '5px' }}>
+                      {item.icon === 'real-pond' ? <div style={{ fontSize: '20px' }}>🦆</div> : <span className="item-icon">{item.icon}</span>}
                     </div>
-                    <div style={{fontSize:'12px', marginBottom: '5px'}}>{item.name}</div>
-                    
+                    <div style={{ fontSize: '12px', marginBottom: '5px' }}>{item.name}</div>
+
                     {/* 💰 판매 및 꺼내기 버튼 */}
                     <div className="inv-actions">
                       <button className="btn-inv btn-place" onClick={() => placeItem(item)}>📍 배치</button>
-                      <button className="btn-inv btn-sell" onClick={() => sellItem(item)}>💰 팔기</button>
+                      <button className="btn-inv btn-sell" onClick={() => sellItem(item)}>
+                        💰 팔기 (+{Math.floor(item.cost / 2)}) {/* 💡 돌려받을 가격 표시! */}
+                      </button>
                     </div>
                   </div>
                 ))
