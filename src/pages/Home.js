@@ -29,7 +29,7 @@ function Home({ isMuted }) {
   const [leaps, setLeaps] = useState([]);
   const [isNight, setIsNight] = useState(new Date().getHours() >= 19 || new Date().getHours() < 6);
   const [animals, setAnimals] = useState([]);
-  const [acorns, setAcorns] = useState(0);
+  const [acorns, setAcorns] = useState(30);
 
   const [inventory, setInventory] = useState([]);
   const [decorations, setDecorations] = useState([]);
@@ -45,7 +45,7 @@ function Home({ isMuted }) {
     // 🗺️ 숲 목록과 현재 숲 불러오기 (없으면 기본 숲 1개 생성)
     const savedForests = JSON.parse(localStorage.getItem('forests')) || [{ id: 'forest-1', name: '나의 첫 숲 🌲' }];
     const savedCurrent = localStorage.getItem('currentForest') || 'forest-1';
-    
+
     setForests(savedForests);
     setCurrentForest(savedCurrent);
 
@@ -55,7 +55,7 @@ function Home({ isMuted }) {
     setInventory(JSON.parse(localStorage.getItem('inventory')) || []);
 
     const savedLeaps = JSON.parse(localStorage.getItem('leaps')) || [];
-    
+
     // 💡 동물을 계산할 때 '현재 숲'에 있는 나무만 계산하도록 수정
     const currentForestLeaps = savedLeaps.filter(leap => (leap.forestId || 'forest-1') === savedCurrent);
     const grownCount = currentForestLeaps.filter(leap => {
@@ -197,7 +197,7 @@ function Home({ isMuted }) {
       const updatedForests = [...forests, newForest];
       setForests(updatedForests);
       localStorage.setItem('forests', JSON.stringify(updatedForests));
-      
+
       setCurrentForest(newForest.id);
       localStorage.setItem('currentForest', newForest.id);
       setIsMapOpen(false);
@@ -211,6 +211,18 @@ function Home({ isMuted }) {
     setIsMapOpen(false);
     setSelectedDeco(null);
     setIsEditMode(false);
+  };
+
+  const renameForest = (forestId, currentName) => {
+    const newName = prompt("숲의 새로운 이름을 지어주세요! ✏️", currentName);
+    
+    if (newName && newName.trim() !== "") {
+      const updatedForests = forests.map(f => 
+        f.id === forestId ? { ...f, name: newName.trim() } : f
+      );
+      setForests(updatedForests);
+      localStorage.setItem('forests', JSON.stringify(updatedForests));
+    }
   };
 
   // 💡 화면에 그리기 전에 '현재 숲'에 해당하는 아이템과 나무만 필터링!
@@ -246,8 +258,8 @@ function Home({ isMuted }) {
         )}
 
         {/* 🗺️ 도토리 & 현재 숲 이름 (지도 열기 버튼) */}
-        <div style={{ position: 'fixed', top: '20px', left: '20px', zIndex: 9999, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div className="acorn-counter" style={{ position: 'static' }}>🌰 {acorns}</div>
+        <div style={{ position: 'fixed', top: '80px', left: '20px', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '10px' }}>
+          
           <button 
             onClick={() => setIsMapOpen(true)}
             style={{ 
@@ -258,6 +270,9 @@ function Home({ isMuted }) {
           >
             🗺️ {forests.find(f => f.id === currentForest)?.name || '숲 이동'}
           </button>
+
+          <div className="acorn-counter" style={{ position: 'static', margin: 0 }}>🌰 {acorns}</div>
+          
         </div>
 
         <button
@@ -300,9 +315,9 @@ function Home({ isMuted }) {
               }}
             >
               {isSelected && (
-                <div 
-                  className="item-edit-panel" 
-                  onPointerDown={(e) => e.stopPropagation()} 
+                <div
+                  className="item-edit-panel"
+                  onPointerDown={(e) => e.stopPropagation()}
                   onClick={(e) => e.stopPropagation()}
                   style={{
                     transform: `translateX(-50%) scale(${1 / currentScale})`,
@@ -339,7 +354,7 @@ function Home({ isMuted }) {
                 ) : (
                   <span style={{
                     filter: isNight && deco.id === 'lamp' ? 'drop-shadow(0 0 10px rgba(255, 230, 100, 0.8))' :
-                            isNight && deco.id === 'campfire' ? 'drop-shadow(0 0 10px rgba(255, 100, 0, 0.8))' : 'none',
+                      isNight && deco.id === 'campfire' ? 'drop-shadow(0 0 10px rgba(255, 100, 0, 0.8))' : 'none',
                     transition: 'filter 0.5s ease'
                   }}>
                     {deco.icon}
@@ -473,25 +488,48 @@ function Home({ isMuted }) {
             <h3 style={{ margin: 0 }}>🗺️ 숲속 지도</h3>
             <button onClick={() => setIsMapOpen(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '16px' }}>✖️</button>
           </div>
-          
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '300px', overflowY: 'auto' }}>
-            {forests.map(forest => (
-              <button 
-                key={forest.id}
-                onClick={() => switchForest(forest.id)}
-                style={{
-                  padding: '15px', borderRadius: '10px', border: 'none',
-                  background: forest.id === currentForest ? '#4CAF50' : '#f1f1f1',
-                  color: forest.id === currentForest ? 'white' : 'black',
-                  fontWeight: 'bold', cursor: 'pointer', textAlign: 'left',
-                  transition: '0.2s'
-                }}
-              >
-                {forest.id === currentForest ? '📍 ' : '🌲 '}{forest.name}
-              </button>
+          {forests.map(forest => (
+              // 👇 버튼 두 개를 가로로 나란히 놓기 위해 div로 묶었습니다!
+              <div key={forest.id} style={{ display: 'flex', gap: '5px' }}>
+                
+                {/* 기존 숲 이동 버튼 (flex: 1 을 줘서 왼쪽을 꽉 채우게 함) */}
+                <button
+                  onClick={() => switchForest(forest.id)}
+                  style={{
+                    flex: 1, 
+                    padding: '15px', borderRadius: '10px', border: 'none',
+                    background: forest.id === currentForest ? '#4CAF50' : '#f1f1f1',
+                    color: forest.id === currentForest ? 'white' : 'black',
+                    fontWeight: 'bold', cursor: 'pointer', textAlign: 'left',
+                    transition: '0.2s'
+                  }}
+                >
+                  {forest.id === currentForest ? '📍 ' : '🌲 '}{forest.name}
+                </button>
+
+                {/* ✏️ 새롭게 추가된 이름 수정 버튼! */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation(); // 숲이 이동되는 걸 막음
+                    renameForest(forest.id, forest.name); // 이름 변경 함수 실행
+                  }}
+                  style={{
+                    padding: '0 15px', borderRadius: '10px', border: 'none',
+                    background: '#e0e0e0', cursor: 'pointer', fontSize: '16px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}
+                  title="이름 수정"
+                >
+                  ✏️
+                </button>
+              </div>
             ))}
+
             
-            <button 
+
+            <button
               onClick={createNewForest}
               style={{
                 padding: '15px', borderRadius: '10px', border: '2px dashed #4CAF50',
@@ -501,6 +539,7 @@ function Home({ isMuted }) {
             >
               ➕ 새로운 숲 개척하기
             </button>
+
           </div>
         </div>
       )}

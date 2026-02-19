@@ -20,10 +20,16 @@ function Create() {
   ];
 
   const handleStart = () => {
-    // 1. 기존 데이터 불러오기
+    // 1. 기존 데이터 및 현재 숲 정보 불러오기
     const currentLeaps = JSON.parse(localStorage.getItem('leaps')) || [];
     
-    // 2. 랜덤 위치 계산 (이전과 동일)
+    // 🗺️ 현재 내가 위치한 숲의 ID 가져오기 (없으면 기본값 'forest-1')
+    const currentForestId = localStorage.getItem('currentForest') || 'forest-1';
+    
+    // 💡 위치가 겹치는지 확인할 때 '현재 숲'에 있는 나무들만 대상으로 필터링!
+    const currentForestLeaps = currentLeaps.filter(leap => (leap.forestId || 'forest-1') === currentForestId);
+    
+    // 2. 랜덤 위치 계산
     let newX, newY;
     let isSafe = false;
     let attempts = 0;
@@ -33,7 +39,8 @@ function Create() {
       newY = Math.floor(Math.random() * 70) + 15;
       isSafe = true;
 
-      for (const leap of currentLeaps) {
+      // 전체 나무(currentLeaps)가 아니라 현재 숲 나무(currentForestLeaps)와 비교
+      for (const leap of currentForestLeaps) {
         const existingX = leap.x || 50;
         const existingY = leap.y || 50;
         const distance = Math.sqrt(Math.pow(newX - existingX, 2) + Math.pow(newY - existingY, 2));
@@ -50,13 +57,14 @@ function Create() {
     const newLeap = {
       id: newId,
       goal: goal,
-      category: category, // 👈 ⭐ 선택한 나무 종류 저장!
+      category: category, 
       actions: actions,
       checked: [false, false, false],
       completed: false,
       date: new Date().toLocaleDateString(),
       x: newX, 
-      y: newY  
+      y: newY,
+      forestId: currentForestId // 👈 ⭐ 새로 심는 나무에 '현재 숲' 꼬리표 달아주기!
     };
 
     localStorage.setItem('leaps', JSON.stringify([...currentLeaps, newLeap]));
