@@ -39,7 +39,7 @@ function Run({ isMuted }) {
     }
   };
 
-  // ✅ 체크 및 보상 로직 수정!
+  // ✅ 체크 및 보상 로직 (3그루 달성 보너스 추가!)
   const handleCheck = (index) => {
     if (!leap || isEditing) return;
     
@@ -56,22 +56,47 @@ function Run({ isMuted }) {
     // 이미 보상을 받았는지 확인
     let isRewardClaimed = leap.rewarded || false;
 
+    // 전체 나무 데이터 가져오기 (보너스 계산용 및 업데이트용)
+    const allLeaps = JSON.parse(localStorage.getItem('leaps')) || [];
+
     // 🎉 완료했고 + 아직 보상을 안 받았다면? -> 도토리 지급!
     if (isComplete && !isRewardClaimed) {
+      isRewardClaimed = true; // 보상 받음 처리 (중복 방지)
+
+      // 1. 기본 보상 30개 계산
+      let earnedAcorns = 30;
+      let alertMessage = "축하합니다! 나무가 다 자랐어요.\n황금 도토리 30개를 얻었습니다! 🌰";
+
+      // 2. 전체 숲에서 "완성된 나무"가 몇 그루인지 계산
+      const previouslyGrownCount = allLeaps.filter(l => {
+        if (l.id === leap.id) return false; 
+        
+        const lTotal = (l.actions || []).length;
+        const lChecked = (l.checked || []).filter(Boolean).length;
+        return lTotal > 0 && lTotal === lChecked;
+      }).length;
+
+      const currentGrownCount = previouslyGrownCount + 1; // 방금 완성한 나무 포함
+
+      // 3. 3의 배수(3, 6, 9...)인지 확인하고 보너스 추가!
+      if (currentGrownCount % 3 === 0) {
+        earnedAcorns += 10; // 보너스 10개 추가 (총 40개)
+        alertMessage = `🎉 엄청나요! ${currentGrownCount}번째 나무를 완성했어요!\n황금 도토리 30개 + 보너스 10개 (총 40개)를 얻었습니다! 🌰✨`;
+      }
+
+      // 4. 알람 띄우고 도토리 저장하기
       setTimeout(() => {
         playSuccessSound();
-        alert("축하합니다! 나무가 다 자랐어요.\n황금 도토리 10개를 얻었습니다! 🌰");
+        alert(alertMessage);
       }, 300);
 
-      // 도토리 저장
       const currentAcorns = parseInt(localStorage.getItem('acorns') || '0');
-      localStorage.setItem('acorns', currentAcorns + 10);
-      isRewardClaimed = true; // 보상 받음 처리
+      localStorage.setItem('acorns', currentAcorns + earnedAcorns);
+      
     } else if (isComplete) {
       setTimeout(playSuccessSound, 300);
     }
 
-    const allLeaps = JSON.parse(localStorage.getItem('leaps')) || [];
     const updatedLeaps = allLeaps.map(item => 
       item.id === leap.id 
         ? { ...item, checked: newChecked, rewarded: isRewardClaimed } 
@@ -82,7 +107,6 @@ function Run({ isMuted }) {
     setLeap({ ...leap, checked: newChecked, rewarded: isRewardClaimed });
   };
 
-  // 나머지 기능(삭제, 수정 등)은 그대로 유지
   const handleDelete = () => {
     if(window.confirm("이 도약을 숲에서 지울까요?")) {
       const allLeaps = JSON.parse(localStorage.getItem('leaps')) || [];
