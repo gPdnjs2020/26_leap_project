@@ -5,7 +5,6 @@ const TREE_ICONS = {
   health: '🌲', study: '🍂', hobby: '🌸', money: '🍎', default: '🌲'
 };
 
-// 🛒 1. 상점 아이템 확대 (버섯, 밑둥, 모닥불, 텐트 추가!)
 const SHOP_ITEMS = [
   { id: 'flower', name: '꽃', icon: '🌸', cost: 10 },
   { id: 'mushroom', name: '버섯', icon: '🍄', cost: 15 },
@@ -22,6 +21,11 @@ function Home({ isMuted }) {
   const navigate = useNavigate();
   const containerRef = useRef(null);
 
+  // 🗺️ 1. 숲 관리 상태 추가!
+  const [forests, setForests] = useState([]);
+  const [currentForest, setCurrentForest] = useState('forest-1');
+  const [isMapOpen, setIsMapOpen] = useState(false);
+
   const [leaps, setLeaps] = useState([]);
   const [isNight, setIsNight] = useState(new Date().getHours() >= 19 || new Date().getHours() < 6);
   const [animals, setAnimals] = useState([]);
@@ -33,19 +37,28 @@ function Home({ isMuted }) {
   const [isShopOpen, setIsShopOpen] = useState(false);
   const [shopTab, setShopTab] = useState('buy');
 
-  // 🛠️ 정원사 모드 (스케일 및 선택된 아이템 상태 추가)
   const [isEditMode, setIsEditMode] = useState(false);
   const [draggingTarget, setDraggingTarget] = useState(null);
-  const [selectedDeco, setSelectedDeco] = useState(null); // 선택된 아이템 ID 기억
+  const [selectedDeco, setSelectedDeco] = useState(null);
 
   useEffect(() => {
+    // 🗺️ 숲 목록과 현재 숲 불러오기 (없으면 기본 숲 1개 생성)
+    const savedForests = JSON.parse(localStorage.getItem('forests')) || [{ id: 'forest-1', name: '나의 첫 숲 🌲' }];
+    const savedCurrent = localStorage.getItem('currentForest') || 'forest-1';
+    
+    setForests(savedForests);
+    setCurrentForest(savedCurrent);
+
     setLeaps(JSON.parse(localStorage.getItem('leaps')) || []);
     setAcorns(parseInt(localStorage.getItem('acorns') || '0'));
     setDecorations(JSON.parse(localStorage.getItem('decorations')) || []);
     setInventory(JSON.parse(localStorage.getItem('inventory')) || []);
 
     const savedLeaps = JSON.parse(localStorage.getItem('leaps')) || [];
-    const grownCount = savedLeaps.filter(leap => {
+    
+    // 💡 동물을 계산할 때 '현재 숲'에 있는 나무만 계산하도록 수정
+    const currentForestLeaps = savedLeaps.filter(leap => (leap.forestId || 'forest-1') === savedCurrent);
+    const grownCount = currentForestLeaps.filter(leap => {
       const total = (leap.actions || []).length;
       const checked = (leap.checked || []).filter(Boolean).length;
       return total > 0 && total === checked;
@@ -58,14 +71,13 @@ function Home({ isMuted }) {
     if (grownCount >= 7) newAnimals.push({ id: 'dr1', type: '🦌', class: 'animal-deer', x: 85, y: 40 });
     if (grownCount >= 10) newAnimals.push({ id: 'br1', type: '🐻', class: 'animal-bear', x: 10, y: 30 });
     setAnimals(newAnimals);
-  }, []);
+  }, [currentForest]); // 💡 숲이 바뀔 때마다 다시 계산
 
   const handlePointerDown = (e, type, id) => {
     if (!isEditMode) return;
     e.preventDefault(); e.stopPropagation();
     setDraggingTarget({ type, id });
 
-    // 장식품을 클릭하면 선택(스케일 조절 패널 띄움), 빈 공간 누르면 해제
     if (type === 'deco') setSelectedDeco(id);
     else setSelectedDeco(null);
   };
@@ -101,7 +113,7 @@ function Home({ isMuted }) {
       setAcorns(newAcorn);
       localStorage.setItem('acorns', newAcorn);
 
-      const newItem = { uid: Date.now(), scale: 1, ...item }; // 기본 스케일 1 추가
+      const newItem = { uid: Date.now(), scale: 1, ...item };
       const newInventory = [...inventory, newItem];
       setInventory(newInventory);
       localStorage.setItem('inventory', JSON.stringify(newInventory));
@@ -112,7 +124,6 @@ function Home({ isMuted }) {
     }
   };
 
-  // 🛒 2. 중고 판매 (반값) 기능 추가
   const sellItem = (item) => {
     const sellPrice = Math.floor(item.cost / 2);
     if (window.confirm(`${item.name}을(를) 중고로 판매하고 ${sellPrice}도토리를 받으시겠어요? 💰`)) {
@@ -127,7 +138,8 @@ function Home({ isMuted }) {
   };
 
   const placeItem = (item) => {
-    const placedItem = { ...item, x: 50, y: 50 };
+    // 🗺️ 2. 아이템 배치 시 '현재 숲' 꼬리표 달기
+    const placedItem = { ...item, x: 50, y: 50, forestId: currentForest };
     const newInventory = inventory.filter(i => i.uid !== item.uid);
     setInventory(newInventory);
     localStorage.setItem('inventory', JSON.stringify(newInventory));
@@ -138,7 +150,7 @@ function Home({ isMuted }) {
 
     setIsShopOpen(false);
     setIsEditMode(true);
-    setSelectedDeco(item.uid); // 꺼내자마자 바로 선택되도록
+    setSelectedDeco(item.uid);
     alert(`${item.name} 위치와 크기를 조절해 보세요!`);
   };
 
@@ -153,21 +165,20 @@ function Home({ isMuted }) {
     const newItem = { ...target };
     delete newItem.x;
     delete newItem.y;
+    delete newItem.forestId; // 보관함으로 갈 땐 숲 꼬리표 떼기
 
     const newInventory = [...inventory, newItem];
     setInventory(newInventory);
     localStorage.setItem('inventory', JSON.stringify(newInventory));
 
-    setSelectedDeco(null); // 보관했으니 선택 해제
+    setSelectedDeco(null);
   };
 
-  // 📐 3. 아이템 크기 조절 기능
   const changeScale = (uid, delta) => {
     setDecorations(prev => {
       const updated = prev.map(d => {
         if (d.uid === uid) {
           const currentScale = d.scale || 1;
-          // 0.5배 ~ 최대 2.5배까지 제한
           const newScale = Math.max(0.5, Math.min(2.5, currentScale + delta));
           return { ...d, scale: newScale };
         }
@@ -178,6 +189,34 @@ function Home({ isMuted }) {
     });
   };
 
+  // 🗺️ 새 숲 만들기 함수
+  const createNewForest = () => {
+    const newName = prompt("새로운 숲의 이름을 지어주세요! 🌳");
+    if (newName) {
+      const newForest = { id: `forest-${Date.now()}`, name: newName };
+      const updatedForests = [...forests, newForest];
+      setForests(updatedForests);
+      localStorage.setItem('forests', JSON.stringify(updatedForests));
+      
+      setCurrentForest(newForest.id);
+      localStorage.setItem('currentForest', newForest.id);
+      setIsMapOpen(false);
+    }
+  };
+
+  // 🗺️ 숲 이동하기 함수
+  const switchForest = (forestId) => {
+    setCurrentForest(forestId);
+    localStorage.setItem('currentForest', forestId);
+    setIsMapOpen(false);
+    setSelectedDeco(null);
+    setIsEditMode(false);
+  };
+
+  // 💡 화면에 그리기 전에 '현재 숲'에 해당하는 아이템과 나무만 필터링!
+  const activeDecorations = decorations.filter(d => (d.forestId || 'forest-1') === currentForest);
+  const activeLeaps = leaps.filter(l => (l.forestId || 'forest-1') === currentForest);
+
   return (
     <>
       <div
@@ -187,10 +226,7 @@ function Home({ isMuted }) {
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
         onPointerDown={(e) => {
-          // 진짜 빈 바탕(자신)을 눌렀을 때만 선택 해제
-          if (e.target === e.currentTarget) {
-            setSelectedDeco(null);
-          }
+          if (e.target === e.currentTarget) setSelectedDeco(null);
         }}
         style={{
           border: isEditMode ? '4px solid #4CAF50' : 'none',
@@ -209,7 +245,21 @@ function Home({ isMuted }) {
           </>
         )}
 
-        <div className="acorn-counter">🌰 {acorns}</div>
+        {/* 🗺️ 도토리 & 현재 숲 이름 (지도 열기 버튼) */}
+        <div style={{ position: 'fixed', top: '20px', left: '20px', zIndex: 9999, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="acorn-counter" style={{ position: 'static' }}>🌰 {acorns}</div>
+          <button 
+            onClick={() => setIsMapOpen(true)}
+            style={{ 
+              background: 'rgba(255,255,255,0.8)', border: '2px solid #4CAF50', 
+              borderRadius: '20px', padding: '5px 15px', fontWeight: 'bold', cursor: 'pointer',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+            }}
+          >
+            🗺️ {forests.find(f => f.id === currentForest)?.name || '숲 이동'}
+          </button>
+        </div>
+
         <button
           onClick={() => setIsNight(!isNight)}
           style={{
@@ -223,39 +273,32 @@ function Home({ isMuted }) {
         </button>
 
 
-        {/* 🏡 배치된 아이템 렌더링 */}
-        {decorations.map((deco) => {
-          const currentScale = deco.scale || 1; // 현재 배율값
+        {/* 🏡 배치된 아이템 렌더링 (activeDecorations로 필터링됨) */}
+        {activeDecorations.map((deco) => {
+          const currentScale = deco.scale || 1;
           const isSelected = isEditMode && selectedDeco === deco.uid;
 
           return (
             <div
               key={deco.uid}
               className={`decoration-obj ${deco.class || ''}`}
-
-              /* 👇 이벤트 방어막 */
               onPointerDown={(e) => {
                 e.stopPropagation();
                 handlePointerDown(e, 'deco', deco.uid);
               }}
               onClick={(e) => e.stopPropagation()}
-
               style={{
                 left: `${deco.x}%`, top: `${deco.y}%`,
                 fontSize: deco.icon === 'real-pond' ? undefined : '30px',
                 pointerEvents: isEditMode ? 'auto' : 'none',
                 cursor: isEditMode ? 'grab' : 'default',
-
-                /* 💡 다시 전체 박스를 확대합니다! (점선 테두리도 같이 커짐) */
                 transform: `translate(-50%, -50%) scale(${currentScale})`,
-
                 zIndex: isSelected || (isEditMode && draggingTarget?.id === deco.uid) ? 999 : 3,
                 border: isSelected ? '2px dashed #4CAF50' : 'none',
                 borderRadius: '10px',
                 position: 'absolute'
               }}
             >
-              {/* ✨ 아이템 정수리에 뜨는 패널! (역 배율 마법 적용) */}
               {isSelected && (
                 <div 
                   className="item-edit-panel" 
@@ -272,10 +315,7 @@ function Home({ isMuted }) {
                 </div>
               )}
 
-              {/* 👇 여기서부터 수정: 조명 효과가 추가된 아이콘 영역 */}
               <div style={{ position: 'relative' }}>
-                
-                {/* 🌙 밤일 때 가로등(💡)에 노란빛 배경 추가 */}
                 {isNight && deco.id === 'lamp' && (
                   <div style={{
                     position: 'absolute', top: '50%', left: '50%', width: '120px', height: '120px',
@@ -285,7 +325,6 @@ function Home({ isMuted }) {
                   }} />
                 )}
 
-                {/* 🌙 밤일 때 모닥불(🔥)에 붉은빛 배경 추가 */}
                 {isNight && deco.id === 'campfire' && (
                   <div style={{
                     position: 'absolute', top: '50%', left: '50%', width: '100px', height: '100px',
@@ -299,7 +338,6 @@ function Home({ isMuted }) {
                   <div className="real-pond"><span className="pond-duck">🦆</span></div>
                 ) : (
                   <span style={{
-                    /* 💡 이모지 자체에도 빛나는 그림자 효과 부여! */
                     filter: isNight && deco.id === 'lamp' ? 'drop-shadow(0 0 10px rgba(255, 230, 100, 0.8))' :
                             isNight && deco.id === 'campfire' ? 'drop-shadow(0 0 10px rgba(255, 100, 0, 0.8))' : 'none',
                     transition: 'filter 0.5s ease'
@@ -318,7 +356,8 @@ function Home({ isMuted }) {
           </div>
         ))}
 
-        {leaps.map((leap) => {
+        {/* 🌳 나무 렌더링 (activeLeaps로 필터링됨) */}
+        {activeLeaps.map((leap) => {
           const safeChecked = leap.checked || [];
           const progress = safeChecked.filter(Boolean).length;
           const totalActions = (leap.actions || []).length;
@@ -361,7 +400,7 @@ function Home({ isMuted }) {
         className="garden-btn"
         onClick={() => {
           setIsEditMode(!isEditMode);
-          setSelectedDeco(null); // 편집 모드 끄면 선택도 해제
+          setSelectedDeco(null);
         }}
         title={isEditMode ? "편집 완료하기" : "정원 꾸미기"}
         style={{
@@ -374,6 +413,7 @@ function Home({ isMuted }) {
 
       <button className="fab-btn" onClick={() => !isEditMode && navigate('/create')}>+</button>
 
+      {/* 🛒 상점 모달 */}
       {isShopOpen && (
         <div className="shop-modal">
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
@@ -382,12 +422,8 @@ function Home({ isMuted }) {
           </div>
 
           <div className="shop-tabs">
-            <button className={`shop-tab ${shopTab === 'buy' ? 'active' : ''}`} onClick={() => setShopTab('buy')}>
-              상점 🛒
-            </button>
-            <button className={`shop-tab ${shopTab === 'inventory' ? 'active' : ''}`} onClick={() => setShopTab('inventory')}>
-              보관함 📦 ({inventory.length})
-            </button>
+            <button className={`shop-tab ${shopTab === 'buy' ? 'active' : ''}`} onClick={() => setShopTab('buy')}>상점 🛒</button>
+            <button className={`shop-tab ${shopTab === 'inventory' ? 'active' : ''}`} onClick={() => setShopTab('inventory')}>보관함 📦 ({inventory.length})</button>
           </div>
 
           {shopTab === 'buy' && (
@@ -418,19 +454,54 @@ function Home({ isMuted }) {
                       {item.icon === 'real-pond' ? <div style={{ fontSize: '20px' }}>🦆</div> : <span className="item-icon">{item.icon}</span>}
                     </div>
                     <div style={{ fontSize: '12px', marginBottom: '5px' }}>{item.name}</div>
-
-                    {/* 💰 판매 및 꺼내기 버튼 */}
                     <div className="inv-actions">
                       <button className="btn-inv btn-place" onClick={() => placeItem(item)}>📍 배치</button>
-                      <button className="btn-inv btn-sell" onClick={() => sellItem(item)}>
-                        💰 팔기 (+{Math.floor(item.cost / 2)}) {/* 💡 돌려받을 가격 표시! */}
-                      </button>
+                      <button className="btn-inv btn-sell" onClick={() => sellItem(item)}>💰 팔기 (+{Math.floor(item.cost / 2)})</button>
                     </div>
                   </div>
                 ))
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* 🗺️ 지도 모달 (숲 이동/생성) */}
+      {isMapOpen && (
+        <div className="shop-modal" style={{ bottom: '50%', transform: 'translateY(50%)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+            <h3 style={{ margin: 0 }}>🗺️ 숲속 지도</h3>
+            <button onClick={() => setIsMapOpen(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '16px' }}>✖️</button>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '300px', overflowY: 'auto' }}>
+            {forests.map(forest => (
+              <button 
+                key={forest.id}
+                onClick={() => switchForest(forest.id)}
+                style={{
+                  padding: '15px', borderRadius: '10px', border: 'none',
+                  background: forest.id === currentForest ? '#4CAF50' : '#f1f1f1',
+                  color: forest.id === currentForest ? 'white' : 'black',
+                  fontWeight: 'bold', cursor: 'pointer', textAlign: 'left',
+                  transition: '0.2s'
+                }}
+              >
+                {forest.id === currentForest ? '📍 ' : '🌲 '}{forest.name}
+              </button>
+            ))}
+            
+            <button 
+              onClick={createNewForest}
+              style={{
+                padding: '15px', borderRadius: '10px', border: '2px dashed #4CAF50',
+                background: 'transparent', color: '#4CAF50',
+                fontWeight: 'bold', cursor: 'pointer', marginTop: '10px'
+              }}
+            >
+              ➕ 새로운 숲 개척하기
+            </button>
+          </div>
         </div>
       )}
     </>
